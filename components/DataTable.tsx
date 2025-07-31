@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
+import { saveAs } from "file-saver";
+import { useMemo, useState } from "react";
 
 type Props = {
   headers: string[];
@@ -9,19 +10,20 @@ type Props = {
 
 type SortConfig = {
   key: string;
-  direction: 'asc' | 'desc' | null;
+  direction: "asc" | "desc" | null;
 };
 
 export default function DataTable({ headers, rows }: Props) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const handleSort = (header: string) => {
     setSortConfig((prev) => {
-      if (!prev || prev.key !== header) return { key: header, direction: 'asc' };
-      if (prev.direction === 'asc') return { key: header, direction: 'desc' };
+      if (!prev || prev.key !== header)
+        return { key: header, direction: "asc" };
+      if (prev.direction === "asc") return { key: header, direction: "desc" };
       return null; // reset sort
     });
   };
@@ -31,7 +33,9 @@ export default function DataTable({ headers, rows }: Props) {
 
     let result = rows.filter((row) =>
       headers.some((header) =>
-        String(row[header] || '').toLowerCase().includes(lowerQuery)
+        String(row[header] || "")
+          .toLowerCase()
+          .includes(lowerQuery)
       )
     );
 
@@ -39,8 +43,8 @@ export default function DataTable({ headers, rows }: Props) {
       const { key, direction } = sortConfig;
 
       result = [...result].sort((a, b) => {
-        const valA = a[key] ?? '';
-        const valB = b[key] ?? '';
+        const valA = a[key] ?? "";
+        const valB = b[key] ?? "";
 
         const numA = parseFloat(valA);
         const numB = parseFloat(valB);
@@ -48,9 +52,11 @@ export default function DataTable({ headers, rows }: Props) {
 
         const cmp = isNumeric
           ? numA - numB
-          : String(valA).localeCompare(String(valB), undefined, { numeric: true });
+          : String(valA).localeCompare(String(valB), undefined, {
+              numeric: true,
+            });
 
-        return direction === 'asc' ? cmp : -cmp;
+        return direction === "asc" ? cmp : -cmp;
       });
     }
 
@@ -65,8 +71,30 @@ export default function DataTable({ headers, rows }: Props) {
   }, [filteredRows, currentPage, rowsPerPage]);
 
   const getSortIndicator = (header: string) => {
-    if (!sortConfig || sortConfig.key !== header) return '';
-    return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
+    if (!sortConfig || sortConfig.key !== header) return "";
+    return sortConfig.direction === "asc" ? " ▲" : " ▼";
+  };
+
+  const downloadCSV = (data: Record<string, string>[]) => {
+    if (!data.length) return;
+
+    const csv = [
+      headers.join(","),
+      ...data.map((row) =>
+        headers
+          .map((header) => `"${(row[header] || "").replace(/"/g, '""')}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "data.csv");
+  };
+
+  const downloadJSON = (data: Record<string, string>[]) => {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+    saveAs(blob, "data.json");
   };
 
   return (
@@ -84,8 +112,25 @@ export default function DataTable({ headers, rows }: Props) {
           className="w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
         />
 
+        <div className="space-x-2">
+          <button
+            onClick={() => downloadCSV(filteredRows)}
+            className="px-3 py-1 border rounded"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => downloadJSON(filteredRows)}
+            className="px-3 py-1 border rounded"
+          >
+            Export JSON
+          </button>
+        </div>
+
         <div className="flex items-center gap-2 text-sm">
-          <label htmlFor="perPage" className="text-gray-600">Rows per page:</label>
+          <label htmlFor="perPage" className="text-gray-600">
+            Rows per page:
+          </label>
           <select
             id="perPage"
             value={rowsPerPage}
@@ -95,8 +140,10 @@ export default function DataTable({ headers, rows }: Props) {
             }}
             className="border border-gray-300 rounded px-2 py-1"
           >
-            {[10, 25, 50, 100].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[10, 25, 50, 100].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>

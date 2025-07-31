@@ -19,9 +19,7 @@ export default function Home() {
 
       <CSVUpload onDataParsed={handleParsedData} />
 
-      {rows.length > 0 && (
-        <DataTable headers={headers} rows={rows} />
-      )}
+      {rows.length > 0 && <DataTable headers={headers} rows={rows} />}
     </main>
   );
 }
