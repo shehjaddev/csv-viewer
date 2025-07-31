@@ -14,10 +14,10 @@ export default function Home() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-4">
+    <main className="my-10 max-w-11/12 mx-auto">
       <h1 className="text-2xl font-bold mb-4">CSV Viewer</h1>
 
-      <CSVUpload onDataParsed={handleParsedData} />
+      {!rows.length && <CSVUpload onDataParsed={handleParsedData} />}
 
       {rows.length > 0 && <DataTable headers={headers} rows={rows} />}
     </main>

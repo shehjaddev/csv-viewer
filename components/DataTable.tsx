@@ -15,7 +15,10 @@ type SortConfig = {
 
 export default function DataTable({ headers, rows }: Props) {
   const [query, setQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>({
+    key: headers[0],
+    direction: "asc",
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
 
@@ -101,51 +104,88 @@ export default function DataTable({ headers, rows }: Props) {
     <div className="mt-4">
       {/* Global Search */}
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          type="text"
-          placeholder="Global search..."
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setCurrentPage(1); // Reset to first page on new search
-          }}
-          className="w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
-        />
+        <div className="flex justify-between items-center mt-4 text-sm text-gray-900 space-x-2">
+          <input
+            type="text"
+            placeholder="Global search..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setCurrentPage(1); // Reset to first page on new search
+            }}
+            className="w-full sm:max-w-sm px-4 py-2 border border-gray-700 rounded focus:outline-none focus:ring focus:border-gray-900"
+          />
 
-        <div className="space-x-2">
-          <button
-            onClick={() => downloadCSV(filteredRows)}
-            className="px-3 py-1 border rounded"
-          >
-            Export CSV
-          </button>
-          <button
-            onClick={() => downloadJSON(filteredRows)}
-            className="px-3 py-1 border rounded"
-          >
-            Export JSON
-          </button>
+          {filteredRows.length > 1 && (
+            <div className="text-base text-gray-700 whitespace-nowrap">
+              {filteredRows.length} rows
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 text-sm">
-          <label htmlFor="perPage" className="text-gray-600">
-            Rows per page:
-          </label>
-          <select
-            id="perPage"
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="border border-gray-300 rounded px-2 py-1"
-          >
-            {[10, 25, 50, 100].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center mt-4 text-sm text-gray-700 space-x-2">
+            <div className="space-x-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Prev
+              </button>
+              <span>
+                {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <select
+                id="perPage"
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border border-gray-300 rounded px-1 py-1.5 cursor-pointer"
+              >
+                {[10, 25, 50, 100].map((n) => (
+                  <option
+                    key={n}
+                    value={n}
+                    className="px-1 py-1.5 cursor-pointer"
+                  >
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mt-4 text-sm text-gray-700 space-x-2">
+          <div className="space-x-2">
+            <button
+              onClick={() => downloadCSV(filteredRows)}
+              className="px-3 py-1 border rounded cursor-pointer"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={() => downloadJSON(filteredRows)}
+              className="px-3 py-1 border rounded cursor-pointer"
+            >
+              Export JSON
+            </button>
+          </div>
         </div>
       </div>
 
@@ -193,31 +233,6 @@ export default function DataTable({ headers, rows }: Props) {
           </tbody>
         </table>
       </div>
-
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex justify-between items-center mt-4 text-sm text-gray-700">
-          <div>
-            Page {currentPage} of {totalPages}
-          </div>
-          <div className="space-x-2">
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Prev
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1 border rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

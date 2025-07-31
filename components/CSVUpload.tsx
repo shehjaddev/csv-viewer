@@ -38,7 +38,7 @@ export default function CSVUpload({ onDataParsed }: CSVUploadProps) {
   return (
     <div
       {...getRootProps()}
-      className={`border-2 border-dashed p-6 rounded-lg text-center cursor-pointer
+      className={`max-w-1/2 mx-auto my-20 p-32 border-2 border-dashed rounded-lg text-center cursor-pointer
         ${isDragActive ? "bg-blue-100 border-blue-400" : "bg-gray-50"}`}
     >
       <input {...getInputProps()} />
