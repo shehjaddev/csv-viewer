@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import CSVUpload from "@/components/CSVUpload";
+import DataTable from "@/components/DataTable";
+import { useState } from "react";
 
 export default function Home() {
   const [headers, setHeaders] = useState<string[]>([]);
@@ -19,12 +20,7 @@ export default function Home() {
       <CSVUpload onDataParsed={handleParsedData} />
 
       {rows.length > 0 && (
-        <div className="mt-6">
-          <p className="mb-2 font-medium">Parsed {rows.length} rows</p>
-          <pre className="bg-gray-100 p-4 rounded text-sm overflow-x-auto">
-            {JSON.stringify(rows.slice(0, 2), null, 2)} {/* sample preview */}
-          </pre>
-        </div>
+        <DataTable headers={headers} rows={rows} />
       )}
     </main>
   );
