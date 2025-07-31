@@ -15,6 +15,8 @@ type SortConfig = {
 export default function DataTable({ headers, rows }: Props) {
   const [query, setQuery] = useState('');
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const handleSort = (header: string) => {
     setSortConfig((prev) => {
@@ -55,6 +57,13 @@ export default function DataTable({ headers, rows }: Props) {
     return result;
   }, [query, rows, headers, sortConfig]);
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, currentPage, rowsPerPage]);
+
   const getSortIndicator = (header: string) => {
     if (!sortConfig || sortConfig.key !== header) return '';
     return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
@@ -63,14 +72,34 @@ export default function DataTable({ headers, rows }: Props) {
   return (
     <div className="mt-4">
       {/* Global Search */}
-      <div className="mb-4">
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <input
           type="text"
           placeholder="Global search..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setCurrentPage(1); // Reset to first page on new search
+          }}
+          className="w-full sm:max-w-sm px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-400"
         />
+
+        <div className="flex items-center gap-2 text-sm">
+          <label htmlFor="perPage" className="text-gray-600">Rows per page:</label>
+          <select
+            id="perPage"
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="border border-gray-300 rounded px-2 py-1"
+          >
+            {[10, 25, 50, 100].map(n => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Table */}
@@ -91,7 +120,7 @@ export default function DataTable({ headers, rows }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredRows.map((row, rowIndex) => (
+            {paginatedRows.map((row, rowIndex) => (
               <tr key={rowIndex} className="hover:bg-gray-50">
                 {headers.map((header) => (
                   <td
@@ -117,6 +146,31 @@ export default function DataTable({ headers, rows }: Props) {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center mt-4 text-sm text-gray-700">
+          <div>
+            Page {currentPage} of {totalPages}
+          </div>
+          <div className="space-x-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
